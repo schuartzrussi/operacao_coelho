@@ -9,8 +9,8 @@ class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('background', 'images/background.png')
-        this.load.image('ship', 'images/rotated_ship.png')
+        this.load.image('background', 'images/background.jpg')
+        this.load.image('ship', 'images/ship.png')
         this.load.image('laser', 'images/rotated_laser.png')
         this.load.image('item_ammo', 'images/item_ammo.png')
         this.load.spritesheet("asteroid", "images/asteroids.png", { frameWidth: 128, frameHeight: 128 });

@@ -12,7 +12,7 @@ class Ship {
         this.sprite.setCollideWorldBounds(true);
         this.sprite.setDepth(2);
         this.sprite.setDrag(300);
-        this.sprite.setScale(0.2)
+        this.sprite.setScale(1)
         this.sprite.setAngularDrag(400);
         this.sprite.setMaxVelocity(600);
 
