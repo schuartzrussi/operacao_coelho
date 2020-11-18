@@ -18,6 +18,9 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
+        this.enemys = []
+        this.lastUpdate = null;
+
         this.windowWidth = window.innerWidth * window.devicePixelRatio
         this.windowHeight = window.innerHeight * window.devicePixelRatio
         this.bg = this.add.tileSprite(this.windowWidth / 2, this.windowHeight / 2, this.windowWidth, this.windowHeight, 'background').setScrollFactor(0);
@@ -84,6 +87,41 @@ class GameScene extends Phaser.Scene {
             this.createAsteroid()
             this.qtdAsteroids++
         }
+
+        this.socket = io();
+        this.socket.on('connect', () => {
+            this.socket.emit('new_player', {
+                'x': this.ship.sprite.x, 
+                'y': this.ship.sprite.y,
+                'rotation': this.ship.sprite.rotation
+            });
+        });
+
+        this.socket.on('all_players', (players) => {
+            for (let i = 0; i < players.length; i++) {
+                if (players[i].id != this.socket.id) {
+                    let enemy = new Enemy(
+                        this, 
+                        players[i].id, 
+                        players[i].x, 
+                        players[i].y, 
+                        players[i].rotation
+                    )
+
+                    this.enemys.push(enemy);
+                }
+            }
+        });
+
+        this.socket.on("player_update", (player) => {
+            for (let j = 0; j < this.enemys.length;j++) {
+                if (player.id == this.enemys[j].id) {
+                    this.enemys[j].sprite.x = player.x
+                    this.enemys[j].sprite.y = player.y
+                    this.enemys[j].sprite.body.setAngularDrag(player.rotation)
+                }
+            }
+        })
     }
 
     showExplosion(x, y) {
@@ -120,6 +158,16 @@ class GameScene extends Phaser.Scene {
         if (this.qtdAsteroids < this.MAX_ASTEROIDS) {
             this.createAsteroid()
             this.qtdAsteroids ++;
+        }
+
+        if(this.lastUpdate == null || (time - this.lastUpdate) > 50)  {
+            const playerUpdate = {
+                'x': this.ship.sprite.x,
+                'y': this.ship.sprite.y,
+                'rotation': this.ship.sprite.rotation
+            }
+            this.socket.emit("player_update", playerUpdate)
+            this.lastUpdate = time; 
         }
     }
 

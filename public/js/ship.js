@@ -2,11 +2,13 @@ class Ship {
 
     constructor(scene, fireCallback) {
         this.scene = scene
-
+        
         this.fireCallback = fireCallback
 
-        const positionX = getRandomInt(-5000, 5000)
-        const positionY = getRandomInt(-5000, 5000)
+        // const positionX = getRandomInt(-5000, 5000)
+        // const positionY = getRandomInt(-5000, 5000)
+        const positionX = 600;
+        const positionY = 600;
 
         this.sprite = scene.physics.add.image(positionX, positionY, 'ship');
         this.sprite.setCollideWorldBounds(true);
