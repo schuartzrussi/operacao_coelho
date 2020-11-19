@@ -18,7 +18,55 @@ class GameScene extends Phaser.Scene {
     }
 
     create() {
-        this.enemys = []
+        this.enemyMap = {}
+        this.gameStarted = false;
+        this.eventsReceived = 0;
+        this.socket = io();
+        const self = this;
+
+        this.socket.on('PROTAGONIST', (player) => {
+            self.protagonist = player;
+            self.eventsReceived ++;
+
+            console.log(`received protagonist: ${player}`)
+            if (self.eventsReceived >= 2) {
+                self.playerConnected()
+            }
+        });
+
+        this.socket.on('ALL_PLAYERS', (players) => {
+            self.allPlayers = players;
+            self.eventsReceived ++;
+
+            console.log(`received all players: ${players}`)
+            if (self.eventsReceived >= 2) {
+                self.playerConnected()
+            }
+        });
+
+        this.socket.on('P_JOINED', (player) => {
+            self.createEnemy(player)
+        })
+
+        this.socket.on("P_UPDATE", (player) => {
+            console.log(`Player updated ${player.id}`)
+            if (self.enemyMap[player.id] != undefined) {
+                const enemy = self.enemyMap[player.id]
+                enemy.sprite.x = player.x
+                enemy.sprite.y = player.y
+                enemy.sprite.body.setAngularDrag(player.rotation)
+            }
+        })
+
+        this.socket.on('P_DISCONNECT', (id) => {
+            console.log(`Player ${id} disconnected`)
+            delete self.enemyMap[id]
+        })
+    }
+
+    playerConnected() {
+        console.log("game started")
+
         this.lastUpdate = null;
 
         this.windowWidth = window.innerWidth * window.devicePixelRatio
@@ -29,7 +77,7 @@ class GameScene extends Phaser.Scene {
 
         const self = this;
 
-        this.ship = new Ship(this, function () {
+        this.ship = new Ship(this, this.protagonist.x, this.protagonist.y, function () {
             self.gameInfo.onUpdateBullets(self.ship.bullets)
         });
 
@@ -88,7 +136,9 @@ class GameScene extends Phaser.Scene {
             this.qtdAsteroids++
         }
 
-        this.socket = io();
+        this.gameStarted = true;
+
+        /*
         this.socket.on('connect', () => {
             this.socket.emit('new_player', {
                 'x': this.ship.sprite.x, 
@@ -122,6 +172,25 @@ class GameScene extends Phaser.Scene {
                 }
             }
         })
+        */
+
+        if (this.allPlayers != undefined && this.allPlayers.length > 0) {
+            this.allPlayers.forEach(player => {
+               self.createEnemy(player)
+            }) 
+        }
+    }
+
+    createEnemy(player) {
+        let enemy = new Enemy(
+            this, 
+            player.id, 
+            player.x, 
+            player.y, 
+            player.rotation
+        )
+
+        this.enemyMap[player.id] = enemy;  
     }
 
     showExplosion(x, y) {
@@ -151,23 +220,27 @@ class GameScene extends Phaser.Scene {
     }
 
     update(time, delta) {
-        this.ship.update(time, delta)
-        this.bg.tilePositionX += this.ship.sprite.body.deltaX() * 0.5;
-        this.bg.tilePositionY += this.ship.sprite.body.deltaY() * 0.5;
+        if (this.gameStarted) {
+            this.ship.update(time, delta)
+            this.bg.tilePositionX += this.ship.sprite.body.deltaX() * 0.5;
+            this.bg.tilePositionY += this.ship.sprite.body.deltaY() * 0.5;
 
-        if (this.qtdAsteroids < this.MAX_ASTEROIDS) {
-            this.createAsteroid()
-            this.qtdAsteroids ++;
-        }
-
-        if(this.lastUpdate == null || (time - this.lastUpdate) > 50)  {
-            const playerUpdate = {
-                'x': this.ship.sprite.x,
-                'y': this.ship.sprite.y,
-                'rotation': this.ship.sprite.rotation
+            if (this.qtdAsteroids < this.MAX_ASTEROIDS) {
+                this.createAsteroid()
+                this.qtdAsteroids ++;
             }
-            this.socket.emit("player_update", playerUpdate)
-            this.lastUpdate = time; 
+
+            if(this.lastUpdate == null || (time - this.lastUpdate) > 20)  {
+                const playerUpdate = {
+                    'id': this.socket.id,
+                    'x': this.ship.sprite.x,
+                    'y': this.ship.sprite.y,
+                    'rotation': this.ship.sprite.rotation
+                }
+                console.log("ta mandando")
+                this.socket.emit("P_UPDATE", playerUpdate)
+                this.lastUpdate = time; 
+            }
         }
     }
 

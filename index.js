@@ -11,49 +11,92 @@ let players = []
 
 app.use(express.static('public'))
 app.use(favicon(path.join(__dirname,'public','images','favicon.ico')));
+
 app.get("/", (req, res) => {
     res.sendFile(path.join(__dirname + "/public/index.html"))
 })
 
-io.on('connection', (socket) => {
-    console.log('a user connected');
 
-    socket.on("new_player", (player) => {
-        player.id = socket.id
-        players.push(player)
-        socket.emit("all_players", players)
-    })
+class GameServer {
+    constructor() {
+        this.players = {}
 
-    socket.on("player_update", (player) => {
-        for (let i = 0; i < players.length; i++) {
-            if (players[i].id == socket.id) {
-                players[i].x = player.x
-                players[i].y = player.y
-                players[i].rotation = player.rotation
-                
-                break;
-            }
-        }
+        io.on("connection", (socket) => {
+            this.onPlayerConnect(socket)
+            this.attachListeners(socket)
+            console.log("player connected")
+        })
+    }
 
-        socket.broadcast.emit("player_update", player)
-    })
+    connect(port) {
+        http.listen(port, () => {
+            console.info(`Listening on port ${port}`);
+        });
+    }
 
-    socket.on('disconnect', () => {
+    onPlayerConnect(socket) {
+        socket.emit("ALL_PLAYERS", this.getAllPlayers())
+
+        const player = this.createPlayer(socket)
+        socket.emit("PROTAGONIST", player)
+
+        socket.broadcast.emit("P_JOINED", player)
+
+        this.players[socket.id] = player
+    }
+
+    getAllPlayers() {
         const allPlayers = []
-        for (let i = 0; i < players.length; i++) {
-            if (players[i].id != socket.id) {
-                allPlayers.push(players[i])
-            }
+
+        for (var key in this.players) {
+            allPlayers.push(this.players[key])
         }
-        players = allPlayers;
-        io.emit("all_players", players)
-    });
-});
 
+        return allPlayers
+    }
 
-http.listen(3000, () => {
-  console.log('listening on *:3000');
-});
+    attachListeners(socket) {
+        this.attachDisconectListener(socket)
+        this.attachPlayerUpdateListener(socket)
+    }
 
+    attachPlayerUpdateListener(socket) {
+        socket.on("P_UPDATE", (player) => {
+            this.players[socket.id] = player 
+            socket.broadcast.emit("P_UPDATE", player)
+        })
+    }
 
+    attachDisconectListener(socket) {
+        socket.on('disconnect', () => {
+            delete this.players[socket.id]
+            socket.broadcast.emit("P_DISCONNECT", socket.id)
+        });
+    }
 
+    createPlayer(socket) {
+        // const positionX = this.getRandomInt(-5000, 5000)
+        // const positionY = this.getRandomInt(-5000, 5000)
+        
+        const positionX = 600
+        const positionY = 600
+
+        const player = {
+            "id": socket.id,
+            "x": positionX,
+            "y": positionY,
+            "rotation": 0,
+        }
+
+        return player
+    }
+
+    getRandomInt(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+}
+
+const gameServer = new GameServer()
+gameServer.connect(3000)
