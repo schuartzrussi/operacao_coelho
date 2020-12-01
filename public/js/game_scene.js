@@ -20,6 +20,7 @@ class GameScene extends Phaser.Scene {
 
     create() {
         this.enemyMap = {}
+        this.enemyGroup = this.physics.add.group()
         this.gameStarted = false;
         this.eventsReceived = 0;
         this.socket = io();
@@ -115,6 +116,8 @@ class GameScene extends Phaser.Scene {
 
         this.physics.add.collider(this.ship.sprite, this.asteroidsGroup);
 
+        this.physics.add.collider(this.ship.sprite, this.enemyGroup);
+
         this.physics.add.collider(this.ship.sprite, this.itemsGroup, function (ship, item) {
             if (item.type == ITEM_AMMO && self.ship.bullets <= 100) {
                 self.ship.bullets += 10;
@@ -157,6 +160,7 @@ class GameScene extends Phaser.Scene {
         )
 
         this.enemyMap[player.id] = enemy;  
+        this.enemyGroup.add(enemy.sprite)
     }
 
     showExplosion(x, y) {
