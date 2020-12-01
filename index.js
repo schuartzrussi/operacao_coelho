@@ -85,7 +85,7 @@ class GameServer {
             "id": socket.id,
             "x": positionX,
             "y": positionY,
-            "rotation": 0,
+            "acceleration": 0,
         }
 
         return player

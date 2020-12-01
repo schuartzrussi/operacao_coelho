@@ -1,7 +1,8 @@
 class Ship {
 
-    constructor(scene, positionX, positionY, fireCallback) {
+    constructor(scene, positionX, positionY, fireCallback, socket) {
         this.scene = scene
+        this.socket = socket
         
         this.fireCallback = fireCallback
 
@@ -74,5 +75,15 @@ class Ship {
                 }
             }
         }
+
+        const updateEvent = {
+            "id": this.socket.id,
+            "x": this.sprite.x,
+            "y": this.sprite.y,
+            "rotation": this.sprite.rotation,
+            "angle": this.sprite.angle,
+        }
+
+        this.socket.emit("P_UPDATE", updateEvent)
     }
 }

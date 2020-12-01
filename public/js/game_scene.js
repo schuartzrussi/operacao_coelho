@@ -11,6 +11,7 @@ class GameScene extends Phaser.Scene {
     preload() {
         this.load.image('background', 'images/background.jpg')
         this.load.image('ship', 'images/ship.png')
+        this.load.image('ship_enemy', 'images/ship-enemy.png')
         this.load.image('laser', 'images/rotated_laser.png')
         this.load.image('item_ammo', 'images/item_ammo.png')
         this.load.spritesheet("asteroid", "images/asteroids.png", { frameWidth: 128, frameHeight: 128 });
@@ -54,7 +55,8 @@ class GameScene extends Phaser.Scene {
                 const enemy = self.enemyMap[player.id]
                 enemy.sprite.x = player.x
                 enemy.sprite.y = player.y
-                enemy.sprite.body.setAngularDrag(player.rotation)
+                enemy.sprite.rotation = player.rotation
+                enemy.sprite.angle = player.angle
             }
         })
 
@@ -79,7 +81,7 @@ class GameScene extends Phaser.Scene {
 
         this.ship = new Ship(this, this.protagonist.x, this.protagonist.y, function () {
             self.gameInfo.onUpdateBullets(self.ship.bullets)
-        });
+        }, this.socket);
 
         this.asteroidsGroup = this.physics.add.group({
             classType: Asteroid,
@@ -138,42 +140,6 @@ class GameScene extends Phaser.Scene {
 
         this.gameStarted = true;
 
-        /*
-        this.socket.on('connect', () => {
-            this.socket.emit('new_player', {
-                'x': this.ship.sprite.x, 
-                'y': this.ship.sprite.y,
-                'rotation': this.ship.sprite.rotation
-            });
-        });
-
-        this.socket.on('all_players', (players) => {
-            for (let i = 0; i < players.length; i++) {
-                if (players[i].id != this.socket.id) {
-                    let enemy = new Enemy(
-                        this, 
-                        players[i].id, 
-                        players[i].x, 
-                        players[i].y, 
-                        players[i].rotation
-                    )
-
-                    this.enemys.push(enemy);
-                }
-            }
-        });
-
-        this.socket.on("player_update", (player) => {
-            for (let j = 0; j < this.enemys.length;j++) {
-                if (player.id == this.enemys[j].id) {
-                    this.enemys[j].sprite.x = player.x
-                    this.enemys[j].sprite.y = player.y
-                    this.enemys[j].sprite.body.setAngularDrag(player.rotation)
-                }
-            }
-        })
-        */
-
         if (this.allPlayers != undefined && this.allPlayers.length > 0) {
             this.allPlayers.forEach(player => {
                self.createEnemy(player)
@@ -228,18 +194,6 @@ class GameScene extends Phaser.Scene {
             if (this.qtdAsteroids < this.MAX_ASTEROIDS) {
                 this.createAsteroid()
                 this.qtdAsteroids ++;
-            }
-
-            if(this.lastUpdate == null || (time - this.lastUpdate) > 20)  {
-                const playerUpdate = {
-                    'id': this.socket.id,
-                    'x': this.ship.sprite.x,
-                    'y': this.ship.sprite.y,
-                    'rotation': this.ship.sprite.rotation
-                }
-                console.log("ta mandando")
-                this.socket.emit("P_UPDATE", playerUpdate)
-                this.lastUpdate = time; 
             }
         }
     }
