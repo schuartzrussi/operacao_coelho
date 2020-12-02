@@ -70,7 +70,7 @@ class Ship {
 
                 if (laser) {
                     this.socket.emit("FIRE")
-                    laser.fire(this.sprite, 1500);
+                    laser.fire(this.sprite, this.socket.id, 1500);
                     this.lastFired = time + 350;
                     this.bullets --;
                     this.fireCallback()

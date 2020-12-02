@@ -11,10 +11,12 @@ class Laser extends Phaser.Physics.Arcade.Image {
         this.setDepth(1);
         this.setScale(0.6)
         this._temp = new Phaser.Math.Vector2();
+        this.playerId = null
     }
 
-    fire(shooterGameObject, speed) {
+    fire(shooterGameObject, playerId, speed) {
         this.lifespan = 1000; 
+        this.playerId = playerId
         this.speed = speed;
 
         this.setActive(true);

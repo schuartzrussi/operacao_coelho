@@ -65,6 +65,10 @@ class GameScene extends Phaser.Scene {
             console.log(`Player ${id} disconnected`)
             self.enemyMap[id].sprite.destroy()
             delete self.enemyMap[id]
+
+            if (self.gameInfo != undefined) {
+                self.gameInfo.onUpdatePlayersQuantity(Object.keys(self.enemyMap).length)
+            }
         })
     }
 
@@ -101,8 +105,14 @@ class GameScene extends Phaser.Scene {
 
         this.socket.on('FIRE', (enemyId) => {
             var laser = this.enemyLasers.get();
-            laser.fire(this.enemyMap[enemyId].sprite, 1500);
+            laser.fire(this.enemyMap[enemyId].sprite, enemyId, 1500);
         });
+
+        this.socket.on('KILL', (killerId) => {
+            if (killerId == self.socket.id) {
+                self.gameInfo.addKill()
+            }
+        })
 
         this.itemsGroup = this.physics.add.group({
             classType: Item,
@@ -131,7 +141,7 @@ class GameScene extends Phaser.Scene {
             self.ship.life -= 500
 
             if (self.ship.life <= 0) {
-                self.socket.emit("P_DEAD")
+                self.socket.emit("P_DEAD", laser.playerId)
                 self.socket.close()
                 self.scene.start('menuScene')
             }
@@ -176,6 +186,8 @@ class GameScene extends Phaser.Scene {
                self.createEnemy(player)
             }) 
         }
+
+        this.gameInfo.onUpdatePlayersQuantity(Object.keys(this.enemyMap).length)
     }
 
     createEnemy(player) {
@@ -189,6 +201,7 @@ class GameScene extends Phaser.Scene {
 
         this.enemyMap[player.id] = enemy;  
         this.enemyGroup.add(enemy.sprite)
+        this.gameInfo.onUpdatePlayersQuantity(Object.keys(this.enemyMap).length)
     }
 
     showExplosion(x, y) {

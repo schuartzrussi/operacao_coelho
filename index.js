@@ -59,11 +59,18 @@ class GameServer {
         this.attachDisconectListener(socket)
         this.attachPlayerUpdateListener(socket)
         this.attachFireListener(socket)
+        this.attachKillListener(socket)
     }
 
     attachFireListener(socket) {
         socket.on("FIRE", () => {
             socket.broadcast.emit("FIRE", socket.id)
+        })
+    }
+
+    attachKillListener(socket) {
+        socket.on("P_DEAD", (killerId) => {
+            socket.broadcast.emit("KILL", killerId)
         })
     }
 
