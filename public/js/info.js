@@ -6,7 +6,6 @@ class Info {
         this.windowHeight = windowHeight;
 
         this.kills = 0;
-        this.deaths = 0;
         this.bullets = bullets;
 
         const [playerInfoX, playerInfoY] = this.calcPlayerInfoPosition()
@@ -22,7 +21,7 @@ class Info {
     }
 
     getPlayerInfoText() {
-        return `Kills:${this.kills}  Deaths:${this.deaths}  Bullets:${this.bullets}`
+        return `Kills:${this.kills}  Bullets:${this.bullets}`
     }
 
     updatePlayerInfoText() {
@@ -34,17 +33,8 @@ class Info {
         this.updatePlayerInfoText();
     }
 
-    onUpdateDeaths(d) {
-        this.deaths = d;
-        this.updatePlayerInfoText();
-    }
-
     onUpdateBullets(b) {
         this.bullets = b;
         this.updatePlayerInfoText();
-    }
-
-    onRankUpdated(players) {
-        //
     }
 }

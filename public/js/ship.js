@@ -16,6 +16,7 @@ class Ship {
         this.sprite.setScale(1)
         this.sprite.setAngularDrag(400);
         this.sprite.setMaxVelocity(600);
+        this.sprite.setBounce(0, 0)
 
         this.life = 1000;
         this.bullets = 20;
@@ -68,6 +69,7 @@ class Ship {
                 var laser = this.lasers.get();
 
                 if (laser) {
+                    this.socket.emit("FIRE")
                     laser.fire(this.sprite, 1500);
                     this.lastFired = time + 350;
                     this.bullets --;

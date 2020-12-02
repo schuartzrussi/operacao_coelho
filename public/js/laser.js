@@ -38,6 +38,7 @@ class Laser extends Phaser.Physics.Arcade.Image {
             this.setActive(false);
             this.setVisible(false);
             this.body.stop();
+            this.destroy()
         }
     }
 }

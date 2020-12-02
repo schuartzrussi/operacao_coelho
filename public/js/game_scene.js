@@ -63,6 +63,7 @@ class GameScene extends Phaser.Scene {
 
         this.socket.on('P_DISCONNECT', (id) => {
             console.log(`Player ${id} disconnected`)
+            self.enemyMap[id].sprite.destroy()
             delete self.enemyMap[id]
         })
     }
@@ -92,6 +93,17 @@ class GameScene extends Phaser.Scene {
             }
         });
 
+        this.enemyLasers = this.physics.add.group({
+            classType: Laser,
+            maxSize: 30,
+            runChildUpdate: true
+        });
+
+        this.socket.on('FIRE', (enemyId) => {
+            var laser = this.enemyLasers.get();
+            laser.fire(this.enemyMap[enemyId].sprite, 1500);
+        });
+
         this.itemsGroup = this.physics.add.group({
             classType: Item,
             runChildUpdate: true,
@@ -99,7 +111,7 @@ class GameScene extends Phaser.Scene {
 
         this.explosionParticles = this.add.particles("particles")
 
-        this.physics.add.collider(this.ship.lasers, this.asteroidsGroup, function (laser, asteroid) {
+        this.physics.add.overlap(this.ship.lasers, this.asteroidsGroup, function (laser, asteroid) {
             asteroid.addDamage(laser.power) 
             if (asteroid.life <= 0) {
                 asteroid.destroy()
@@ -114,11 +126,27 @@ class GameScene extends Phaser.Scene {
             laser.destroy()
         })
 
+
+        this.physics.add.overlap(this.enemyLasers, this.ship.sprite, function (ship, laser) {
+            self.ship.life -= 500
+
+            if (self.ship.life <= 0) {
+                self.socket.emit("P_DEAD")
+                self.socket.close()
+                self.scene.start('menuScene')
+            }
+            laser.destroy()
+        })
+
+        this.physics.add.overlap(this.ship.lasers, this.enemyGroup, function(laser, enemy) {
+            laser.destroy()
+        })
+
         this.physics.add.collider(this.ship.sprite, this.asteroidsGroup);
 
         this.physics.add.collider(this.ship.sprite, this.enemyGroup);
 
-        this.physics.add.collider(this.ship.sprite, this.itemsGroup, function (ship, item) {
+        this.physics.add.overlap(this.ship.sprite, this.itemsGroup, function (ship, item) {
             if (item.type == ITEM_AMMO && self.ship.bullets <= 100) {
                 self.ship.bullets += 10;
                 if (self.ship.bullets > 100) {

@@ -58,6 +58,13 @@ class GameServer {
     attachListeners(socket) {
         this.attachDisconectListener(socket)
         this.attachPlayerUpdateListener(socket)
+        this.attachFireListener(socket)
+    }
+
+    attachFireListener(socket) {
+        socket.on("FIRE", () => {
+            socket.broadcast.emit("FIRE", socket.id)
+        })
     }
 
     attachPlayerUpdateListener(socket) {
